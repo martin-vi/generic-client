@@ -151,6 +151,8 @@ public class RequestBean implements Serializable {
     private String responseFile;
     
     private String workspaceService= "";
+    
+    private String targetUrl; 
 
     public File getRequestsBaseDir() {
         return requestsBaseDir;
@@ -283,7 +285,15 @@ public class RequestBean implements Serializable {
     public void setRequests( List<SelectItem> requests ) {
         this.requests = requests;
     }
+    
+    public String getTargetUrl() {
+        return targetUrl;
+    }
 
+    public void setTargetUrl( String targetUrl ) {
+        this.targetUrl = targetUrl;
+    }
+ 
     @PostConstruct
     public void init() {
         allRequests.clear();
@@ -310,6 +320,8 @@ public class RequestBean implements Serializable {
                 }
             }
         }
+        this.setWorkspaceService("deegree-csw");
+        
         loadExample();
     }
 
@@ -362,13 +374,13 @@ public class RequestBean implements Serializable {
                             + ctx.getRequestContextPath() + "/services";
     }
     
-    public String getTargetUrl() {
-        if(workspaceService.equals( "" )) {
-            return getEndpoint();
-        } else {
-            return getEndpoint() + "/" + workspaceService;
-        }
-    }
+//    public String getTargetUrl() {
+//        if(workspaceService.equals( "" )) {
+//            return getEndpoint();
+//        } else {
+//            return getEndpoint() + "/" + workspaceService;
+//        }
+//    }
 
     public void sendRequest()
                             throws UnsupportedEncodingException {
@@ -454,7 +466,9 @@ public class RequestBean implements Serializable {
 
     private void initRequestMap() {
 
-        File wsBaseDir = OGCFrontController.getServiceWorkspace().getLocation();
+       
+        //File wsBaseDir = OGCFrontController.getServiceWorkspace().getLocation();
+        File wsBaseDir = new File( System.getProperty( "user.home" ) + separator + ".deegree/deegree-csw");
         requestsBaseDir = new File( wsBaseDir, "manager/requests" );
         if ( !requestsBaseDir.exists() ) {
             String realPath = FacesContext.getCurrentInstance().getExternalContext().getRealPath( "/requests" );
@@ -652,6 +666,8 @@ public class RequestBean implements Serializable {
     
     public void setWorkspaceService(String workspaceService) {
         for ( String currentWorkspaceService : getWorkspaceServices() ) {
+            System.out.println("currentWorkspaceService");
+            System.out.println(currentWorkspaceService);
             if ( currentWorkspaceService.equals( workspaceService ) ) {
                 this.workspaceService = workspaceService;
                 break;
