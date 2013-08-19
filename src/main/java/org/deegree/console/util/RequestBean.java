@@ -666,8 +666,6 @@ public class RequestBean implements Serializable {
     
     public void setWorkspaceService(String workspaceService) {
         for ( String currentWorkspaceService : getWorkspaceServices() ) {
-            System.out.println("currentWorkspaceService");
-            System.out.println(currentWorkspaceService);
             if ( currentWorkspaceService.equals( workspaceService ) ) {
                 this.workspaceService = workspaceService;
                 break;
