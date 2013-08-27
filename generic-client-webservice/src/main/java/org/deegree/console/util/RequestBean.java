@@ -420,7 +420,9 @@ public class RequestBean implements Serializable {
                     IOUtils.closeQuietly(reader);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                FacesMessage fm = new FacesMessage(e.getMessage());
+                fm.setSeverity(FacesMessage.SEVERITY_ERROR);
+                FacesContext.getCurrentInstance().addMessage(null, fm);
             } finally {
                 IOUtils.closeQuietly(is);
             }
