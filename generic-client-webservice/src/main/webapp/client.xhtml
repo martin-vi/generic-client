@@ -51,15 +51,22 @@
                             <f:selectItems value="#{requestBean.requests}" />
                             <f:ajax render="requestArea" />
                         </h:selectOneMenu>
-                        <h:inputText value="#{requestBean.saveRequestName}"
-                                     rendered="#{logBean.loggedIn}" />
-                        <h:commandButton value="add request"
-                                         action="#{requestBean.addRequest}" rendered="#{logBean.loggedIn}" />
-                        <h:commandButton value="save request"
-                                         action="#{requestBean.saveRequest}" rendered="#{logBean.loggedIn}" />
-                        <h:commandButton value="delete request"
-                                         action="#{requestBean.deleteRequest}"
-                                         rendered="#{logBean.loggedIn}" />
+                        <h:inputText id="saveRequestName" value="#{requestBean.saveRequestName}"/>
+                        
+                        <h:commandButton value="add request" action="#{requestBean.addRequest}" >
+                            <f:ajax 
+                                execute="saveRequestName requestArea"
+                                render="saveRequestName requestsSel requestArea" 
+                                onevent="blockInput" />
+                        </h:commandButton>
+                        
+                        <h:commandButton value="save request" action="#{requestBean.saveRequest}">
+                            <f:ajax execute="requestArea" onevent="blockInput" />
+                        </h:commandButton>
+                        
+                        <h:commandButton value="delete request" action="#{requestBean.deleteRequest}">
+                            <f:ajax render="requestArea requestsSel" onevent="blockInput" />
+                        </h:commandButton>
                     </h:column>
                     <h:column>
                         <h:inputTextarea id="requestArea" value="#{requestBean.request}"
@@ -102,9 +109,6 @@
                                               rendered="#{requestBean.response == null}" />
                             </h:panelGroup>
                         </h:panelGroup>
-                    </h:column>
-                    <h:column>
-                            <!-- h:graphicImage id="mapImage" value="#{requestBean.targetUrl}?#{requestBean.kvpRequestSel}" render="#{requestBean.kvpRequestIsImage}" /-->
                     </h:column>
                 </h:panelGrid>
             </h:panelGroup>

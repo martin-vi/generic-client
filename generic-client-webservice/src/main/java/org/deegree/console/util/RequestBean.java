@@ -37,11 +37,8 @@ package org.deegree.console.util;
 
 import static java.io.File.separator;
 import static java.util.Collections.sort;
-import static org.deegree.commons.utils.CollectionUtils.unzipPair;
 import static org.deegree.commons.utils.net.HttpUtils.enableProxyUsage;
-import static org.deegree.services.controller.FrontControllerStats.getKVPRequests;
 import static org.slf4j.LoggerFactory.getLogger;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -56,14 +53,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
@@ -71,7 +65,6 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
-import javax.faces.event.AjaxBehaviorEvent;
 import javax.faces.model.SelectItem;
 import javax.faces.model.SelectItemGroup;
 
@@ -84,7 +77,6 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.deegree.client.core.utils.MessageUtils;
 import org.deegree.commons.utils.net.DURL;
-import org.deegree.commons.utils.net.HttpUtils;
 import org.deegree.commons.xml.XMLAdapter;
 import org.slf4j.Logger;
 
@@ -114,11 +106,6 @@ public class RequestBean implements Serializable {
     private List<SelectItem> requests;
     private String request;
     private String saveRequestName;
-    private String kvpRequestSel;
-    private TreeSet<String> originalKvpRequests = new TreeSet<String>(
-            (Collection) unzipPair((Collection) getKVPRequests()).second);
-    private TreeSet<String> kvpRequests = new TreeSet<String>(originalKvpRequests);
-    private boolean kvpRequestIsImage = false;
     private String requestFilter;
     private String response;
     // SERVICE
@@ -191,30 +178,6 @@ public class RequestBean implements Serializable {
         this.saveRequestName = saveRequestName;
     }
 
-    public TreeSet<String> getOriginalKvpRequests() {
-        return originalKvpRequests;
-    }
-
-    public void setOriginalKvpRequests(TreeSet<String> originalKvpRequests) {
-        this.originalKvpRequests = originalKvpRequests;
-    }
-
-    public TreeSet<String> getKvpRequests() {
-        return kvpRequests;
-    }
-
-    public void setKvpRequests(TreeSet<String> kvpRequests) {
-        this.kvpRequests = kvpRequests;
-    }
-
-    public boolean isKvpRequestIsImage() {
-        return kvpRequestIsImage;
-    }
-
-    public void setKvpRequestIsImage(boolean kvpRequestIsImage) {
-        this.kvpRequestIsImage = kvpRequestIsImage;
-    }
-
     public String getRequestFilter() {
         return requestFilter;
     }
@@ -255,10 +218,6 @@ public class RequestBean implements Serializable {
         return LOG;
     }
 
-    public String getKvpRequestSel() {
-        return kvpRequestSel;
-    }
-
     public void setRequestProfiles(List<String> requestProfiles) {
         this.requestProfiles = requestProfiles;
     }
@@ -279,6 +238,7 @@ public class RequestBean implements Serializable {
     public void init() {
         allRequests.clear();
 
+        preInit();
         initRequestMap();
 
         List<String> services = new ArrayList<String>();
@@ -324,6 +284,8 @@ public class RequestBean implements Serializable {
         } finally {
             IOUtils.closeQuietly(out);
         }
+        this.saveRequestName = "";
+        setRequests();
     }
 
     public void saveRequest() {
@@ -348,14 +310,6 @@ public class RequestBean implements Serializable {
         initRequestMap();
     }
 
-    public String getEndpoint() {
-        ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
-
-        return ctx.getRequestScheme() + "://"
-                + ctx.getRequestServerName() + ":"
-                + ctx.getRequestServerPort()
-                + ctx.getRequestContextPath() + "/services";
-    }
 
 //    public String getTargetUrl() {
 //        if(workspaceService.equals( "" )) {
@@ -469,7 +423,7 @@ public class RequestBean implements Serializable {
         return props;
     }
 
-    private void initRequestMap() {
+    private void preInit() {
         File wsRoot = new File(System.getProperty("user.home") + separator + ".deegree");
         File activeWsConfigFile = new File(wsRoot, ACTIVE_WS_CONFIG_FILE);
 
@@ -488,7 +442,11 @@ public class RequestBean implements Serializable {
             requestsBaseDir = new File(realPath);
         }
 
-        LOG.debug("Using requests directory " + requestsBaseDir);
+        LOG.debug("Using requests directory " + requestsBaseDir);        
+    }
+
+    private void initRequestMap() {
+
         String[] serviceTypes = requestsBaseDir.list();
         if (serviceTypes != null && serviceTypes.length > 0) {
             Arrays.sort(serviceTypes);
@@ -606,50 +564,6 @@ public class RequestBean implements Serializable {
         }
     }
 
-    /**
-     *
-     */
-    public void sendKVPRequest() {
-        String targetUrl = getTargetUrl();
-
-        LOG.debug("Try to send the following request to " + targetUrl + " : \n" + kvpRequestSel);
-        if (targetUrl != null && targetUrl.length() > 0 && kvpRequestSel != null && kvpRequestSel.length() > 0) {
-            Map<String, String> header = new HashMap<String, String>();
-            try {
-                if (!kvpRequestIsImage) {
-                    this.response = HttpUtils.get(HttpUtils.UTF8STRING, targetUrl + "?" + kvpRequestSel, header);
-                } else {
-                    this.response = "";
-                }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * @param kvpRequestSel
-     */
-    public void setKvpRequestSel(String kvpRequestSel) {
-        this.kvpRequestSel = kvpRequestSel;
-        this.kvpRequestIsImage = kvpRequestSel.toLowerCase().indexOf("request=getmap") != -1;
-    }
-
-    /**
-     * @param evt
-     *
-     */
-    public void applyRequestFilter(AjaxBehaviorEvent evt) {
-        if (requestFilter != null && !requestFilter.isEmpty()) {
-            kvpRequests.clear();
-            for (String req : originalKvpRequests) {
-                if (req.indexOf(requestFilter) != -1) {
-                    kvpRequests.add(req);
-                }
-            }
-        }
-    }
 
     public String getDlparams()
             throws UnsupportedEncodingException {
