@@ -85,7 +85,7 @@
   <distributionManagement>
     <repository>
       <id>latlon-releases</id>
-      <url>http://repo.lat-lon/nexus/content/repositories/releases/</url>
+      <url>http://repo.lat-lon/nexus/content/repositories/generic-client-release/</url>
     </repository>
     <snapshotRepository>
       <id>latlon-snapshots</id>
